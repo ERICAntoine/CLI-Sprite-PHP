@@ -13,39 +13,122 @@
 
         public function getImage()
         {
-            if($this -> argc > 1)
-            {
-                $getInfo = array();
-                
-                $barcode = imagecreatefromstring(file_get_contents($this -> arr[1]));
-                for($i = 1; $i < $this -> argc; $i++)
+            $getInfo = array();
+
+            if($this -> argc > 2)
+            {      
+                $all_width = array();
+                $all_height = array();
+                $w = 0;
+
+                for($j = 1; $j  < $this -> argc; $j++)
                 {
-                    $barcode2 = imagecreatefromstring(file_get_contents($this -> arr[$i]));
-                    //array_push($getInfo, getimagesize($this -> arr[$i]));
-                    array_push($getInfo, getimagesize($this -> arr[$i]));
-                    /*var_dump($this -> arr[$i]);
-                    $sprite = imagecreatefrompng($this -> arr[1]);
-                    $dest = imagecreatetruecolor(1920, 1080);
-                    imagecopy($dest, $sprite, 0, 0, 0, 0, 80, 20);*/
-                    imagecopymerge($barcode, $barcode2,  10, 10, 0, 50, 1000, 470, 750);
+                    array_push($getInfo, getimagesize($this -> arr[$j]));
                 }
-                var_dump($this -> arr[1]);
+
+                foreach($getInfo as $key => $value)
+                {
+                    array_push($all_height, $getInfo[$key][1]);
+                    array_push($all_width, $getInfo[$key][0]);
+                }
+                $allHeightValue = array_sum($all_height);
+                $allWidthValue = array_sum($all_width);
+
+                $truecolor = imagecreatetruecolor($allWidthValue, $allHeightValue);
+
+                for($i = 0; $i < $this -> argc - 1; $i++)
+                {
+                    list($width, $height) = getimagesize($this -> arr[$i + 1]);
+                    $other_img = imagecreatefromstring(file_get_contents($this -> arr[$i + 1]));
+                    imagecopy($truecolor, $other_img, $w, 0, 0, 0, $width, $height);
+                    $w += $all_width[$i];
+                }
+                imagepng($truecolor, "copy.png");
             }
             else
             {
-                echo "Entrez Des fichiers";
+                echo "Entrez plusieurs fichiers";
             }
-            //var_dump($getInfo);
-
-            /*for($j = 0; $j < $this -> argc - 1; $j++)
-            {
-                $sprite = "sprite.png";
-                $dest = imagecreatetruecolor(1920, 1080);
-                //imagecopy($dest);
-            }*/
         }
+
+        function recursiveGetImage()
+        {
+            if($this -> argc > 2)
+            {       
+                    function scanFile($dir, &$fileArray) 
+                    {
+                        $array = glob($dir . '/*');
+
+                        if (is_array($array)) 
+                        {
+                            foreach($array as $key => $file) 
+                            {
+                                if (is_dir($file)) 
+                                {
+                                    scanFile($file);
+                                    //echo $file;
+                                }
+                                elseif(is_file($file)) 
+                                {
+                                   array_push($fileArray, $array[$key]);
+                                }
+                            }
+                        }
+                    }
+
+                    for($i = 1; $i < $this -> argc; $i++)
+                    {
+                        if(is_dir($this -> arr[$i]))
+                        {
+                            scanFile($this -> arr[$i]);
+                        }
+                    }
+                    var_dump($fileArray);
+
+               /*$all_width = array();
+                $all_height = array();
+                $w = 0;
+
+                for($j = 1; $j  < $this -> argc; $j++)
+                {
+                    array_push($getInfo, getimagesize($this -> arr[$j]));
+                }
+
+                foreach($getInfo as $key => $value)
+                {
+                    array_push($all_height, $getInfo[$key][1]);
+                    array_push($all_width, $getInfo[$key][0]);
+                }
+                $allHeightValue = array_sum($all_height);
+                $allWidthValue = array_sum($all_width);
+
+                $truecolor = imagecreatetruecolor($allWidthValue, $allHeightValue);
+
+                for($i = 0; $i < $this -> argc - 1; $i++)
+                {
+                    list($width, $height) = getimagesize($this -> arr[$i + 1]);
+                    $other_img = imagecreatefromstring(file_get_contents($this -> arr[$i + 1]));
+                    imagecopy($truecolor, $other_img, $w, 0, 0, 0, $width, $height);
+                    $w += $all_width[$i];
+                }
+                imagepng($truecolor, "copy.png");*/
+            }
+            else
+            {
+                echo "Entrez plusieurs fichiers";
+            }
+        } 
+        
     }
 
-    $foo = new createSprite($argv);
-    $foo -> getImage();
+    if($argv[1] == "-r" || $argv[1] == "--recursive")
+    {           
+        $foo = new createSprite($argv);
+        $foo -> recursiveGetImage();
+    }
+    /*else
+    {
+        $foo = new createSprite($argv);
+        $foo -> getImage();
+    }*/
 ?>
